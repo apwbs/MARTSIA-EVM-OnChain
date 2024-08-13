@@ -54,33 +54,32 @@ conn = sqlite3.connect('../databases/reader/reader.db')
 x = conn.cursor()
 
 def retrieve_key(transaction):
-    if transaction['from'] in list_auth:
-        partial = bytes.fromhex(transaction['input'][2:]).decode('utf-8').split(',')
-        process_instance_id = partial[1]
-        ipfs_link = partial[0]
-        getfile = api.cat(ipfs_link)
-        getfile = getfile.decode('utf-8').replace(r'\"', r'')
-        j2 = json.loads(getfile)
-        data2 = base64.b64decode(j2)
+    partial = bytes.fromhex(transaction['input'][2:]).decode('utf-8').split(',')
+    process_instance_id = partial[1]
+    ipfs_link = partial[0]
+    getfile = api.cat(ipfs_link)
+    getfile = getfile.decode('utf-8').replace(r'\"', r'')
+    j2 = json.loads(getfile)
+    data2 = base64.b64decode(j2)
 
-        x.execute("SELECT * FROM rsa_private_key WHERE reader_address=?", (reader_address,))
-        result = x.fetchall()
-        pk = result[0][1]
-        privateKey_usable = rsa.PrivateKey.load_pkcs1(pk)
+    x.execute("SELECT * FROM rsa_private_key WHERE reader_address=?", (reader_address,))
+    result = x.fetchall()
+    pk = result[0][1]
+    privateKey_usable = rsa.PrivateKey.load_pkcs1(pk)
 
-        info2 = [data2[i:i + 128] for i in range(0, len(data2), 128)]
-        final_bytes = b''
+    info2 = [data2[i:i + 128] for i in range(0, len(data2), 128)]
+    final_bytes = b''
 
-        for j in info2:
-            message = rsa.decrypt(j, privateKey_usable)
-            final_bytes = final_bytes + message
-        #print(final_bytes)
-        x.execute("INSERT OR REPLACE INTO authorities_generated_decription_keys VALUES (?,?,?,?,?)",
-                  (str(process_instance_id), transaction['from'], ipfs_link, final_bytes, transaction['to']))
-        conn.commit()
+    for j in info2:
+        message = rsa.decrypt(j, privateKey_usable)
+        final_bytes = final_bytes + message
+    #print(final_bytes)
+    x.execute("INSERT OR REPLACE INTO authorities_generated_decription_keys VALUES (?,?,?,?,?)",
+              (str(process_instance_id), transaction['from'], ipfs_link, final_bytes, transaction['to']))
+    conn.commit()
 
 def transactions_monitoring():
-    min_round = 6185  # Starting block number for Ganache
+    min_round = 6468  # Starting block number for Ganache
     first = False
     finished = []
     while True:
@@ -89,8 +88,7 @@ def transactions_monitoring():
             print("Analyzing block:", block.number)
             for transaction in block.transactions:
                 if transaction['to'] == reader_address and 'input' in transaction and transaction['from'] in list_auth and transaction['from'] not in finished:
-                    print('Key retrieved from', authorities_names[authorities_list.index(transaction['from'])], end="")
-                    print("!")
+                    print(f"Key retrieved from {authorities_names[authorities_list.index(transaction['from'])]}!")
                     retrieve_key(transaction)
                     finished.append(transaction['from'])
             if sorted(finished) == sorted(list_auth):

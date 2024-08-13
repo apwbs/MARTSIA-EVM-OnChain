@@ -59,29 +59,22 @@ python3 ../src/client.py -r "$requester_name"
 python3 ../src/reader.py --generate_parameters
 echo "✅ Data owner generate parameters done"
 
+if [ ${#message_id} -lt 10 ] || ! echo "$message_id" | grep -qE '^[0-9]+$'; then
+    matching_lines=$(grep "$message_id" "../src/.cache")
+    if [ $(echo "$matching_lines" | wc -l) -eq 1 ]; then
+      message_id=$(echo "$matching_lines" | grep -oP '\b\d+\b')
+    fi
+fi
+
 if [ -z "$slice_id" ]; then
+  #Check to see if the last cipher has multiple slices and the slice was not specified in input
   if grep -q "| slice1" "../src/.cache"; then
     echo "You need to specify the slice_id (--slice_id)!"
     exit 1
   fi
-  
-  if [ ${#message_id} -lt 10 ] || ! echo "$message_id" | grep -qE '^[0-9]+$'; then
-    matching_lines=$(grep "$message_id" "../src/.cache")
-    if [ $(echo "$matching_lines" | wc -l) -eq 1 ]; then
-      message_id=$(echo "$matching_lines" | grep -oP '\b\d+\b')
-    fi
-  fi
   python3 ../src/reader.py --access --message_id "$message_id" \
   --reader_name "$requester_name" --output_folder "$output_folder"
 else
-  
-  if [ ${#message_id} -lt 10 ] || ! echo "$message_id" | grep -qE '^[0-9]+$'; then
-    matching_lines=$(grep "$message_id" "../src/.cache")
-    if [ $(echo "$matching_lines" | wc -l) -eq 1 ]; then
-      message_id=$(echo "$matching_lines" | grep -oP '\b\d+\b')
-    fi
-  fi
-  
   if [ ${#slice_id} -lt 10 ] || ! echo "$slice_id" | grep -qE '^[0-9]+$'; then
     matching_lines=$(grep "$slice_id" "../src/.cache")
     if [ $(echo "$matching_lines" | wc -l) -eq 1 ]; then

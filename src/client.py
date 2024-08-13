@@ -84,17 +84,17 @@ def send_key_request(authority_address, first_auth):
 if __name__ == "__main__":
     first_auth = 0
     list_auth = []
-    for e in authorities_list:
+    for authority_address in authorities_list:
         x.execute("SELECT * FROM authorities_generated_decription_keys WHERE process_instance=? AND authority_address=? AND reader_address=?",
-                  (str(process_instance_id), e, address_requesting))
+                  (str(process_instance_id), authority_address, address_requesting))
         result = x.fetchall()
         if not result: 
-            send_key_request(e, first_auth)
+            send_key_request(authority_address, first_auth)
             first_auth = 1
-            print(f"Key request sent to authority {authorities_names[authorities_list.index(e)]}!")
-            list_auth.append(e)
+            print(f"Key request sent to authority {authorities_names[authorities_list.index(authority_address)]}!")
+            list_auth.append(authority_address)
         else:
-            print(f"Key already present for authority {authorities_names[authorities_list.index(e)]}!")
+            print(f"Key already present for authority {authorities_names[authorities_list.index(authority_address)]}!")
     if list_auth:
         list_auth_str = json.dumps(list_auth)
         os.system(f"python3 ../src/client2.py -r {args.requester} -a '{list_auth_str}'")
