@@ -48,7 +48,7 @@ def send_ipfs_link(reader_address, process_instance_id, hash_file):
     signed_tx = web3.eth.account.sign_transaction(tx, authority_private_key)
 
     tx_hash = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
-    print(f'tx_hash: {web3.toHex(tx_hash)}  Authority {authority_number}')
+    print(f'tx_hash: {web3.toHex(tx_hash)}')
     tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash, timeout=600)
     print(tx_receipt)
     end = time.time()
@@ -82,7 +82,7 @@ def cipher_generated_key(reader_address, process_instance_id, generated_ma_key):
         j = base64.b64encode(file_to_str).decode('ascii')
         s = json.dumps(j)
         hash_file = api.add_json(s)
-        print(f'ipfs hash: {hash_file}  Authority {authority_number}')
+        print(f'ipfs hash: {hash_file}')
 
         send_ipfs_link(reader_address, process_instance_id, hash_file)
 
@@ -97,7 +97,7 @@ def transactions_monitoring():
             block = web3.eth.getBlock(min_round, True)
             get_block_time = time.time()
             #print('The time for retrieving a block is :', (get_block_time - start) * 10 ** 3, 'ms')
-            #print(f"Analyzing block: {block.number} Authority {authority_number}")
+            print("Analyzing block:", block.number)
             for transaction in block.transactions:
                 if 'to' in transaction:
                     if transaction['to'] == authority_address and 'input' in transaction:
@@ -107,9 +107,11 @@ def transactions_monitoring():
             min_round = min_round + 1
             end = time.time()
             first = False
+            #print('Time for an entire run is: ', (end - start) * 10 ** 3, 'ms')
+            #time.sleep(1)
         except BlockNotFound as e:
             if first == False:
-                print(f"Waiting for new blocks: Retrying every 1 second...  Authority {authority_number}")
+                print(f"Waiting for new blocks: Retrying every 1 second...")
                 first = True
             time.sleep(1)  # Wait for 1 second before retrying
 
