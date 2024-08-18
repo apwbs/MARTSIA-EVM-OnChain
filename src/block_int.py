@@ -219,25 +219,30 @@ def retrieve_publicKey_link(eth_address, process_instance_id):
     message1 = message_bytes.decode('ascii')
     return message1
 
-def send_MessageIPFSLink(dataOwner_address, private_key, message_id, hash_file):
-    with open(compiled_contract_path) as file:
-        contract_json = json.load(file)
-        contract_abi = contract_json['abi']
-    contract = web3.eth.contract(address=deployed_contract_address, abi=contract_abi)
-    tx = {
-        'nonce': get_nonce(dataOwner_address),
-        'gasPrice': web3.eth.gas_price,
-        'from': dataOwner_address
-    }
-    message_bytes = hash_file.encode('ascii')
-    base64_bytes = base64.b64encode(message_bytes)
-    message = contract.functions.setIPFSLink(int(message_id), base64_bytes[:32], base64_bytes[32:]).buildTransaction(tx)
-    signed_transaction = web3.eth.account.sign_transaction(message, private_key)
-    transaction_hash = __send_txt__(signed_transaction.rawTransaction)
-    print(f'tx_hash: {web3.toHex(transaction_hash)}')
-    tx_receipt = web3.eth.wait_for_transaction_receipt(transaction_hash, timeout=600)
-    if verbose:
-        print(tx_receipt)
+def send_MessageIPFSLink(message_id, hash_file):
+    # This "if" is done only for testing, here the INTERNATIONAL SUPPLIER ("0xa5B6B3729Cf8f377EF6F97d87C49661b36Ed02bB") saves the IPFS 
+    # link of the encrypted message on the blockchain using his private key ("0x4f81120a31e3acb68d87b242dd0076247e83d08d85cc97b1b8c395ffda9bc43d"),
+    # it should be done through front-end MetaMask interaction after the "else" statement
+    if True:
+        with open(compiled_contract_path) as file:
+            contract_json = json.load(file)
+            contract_abi = contract_json['abi']
+        contract = web3.eth.contract(address=deployed_contract_address, abi=contract_abi)
+        tx = {
+            'nonce': get_nonce("0xa5B6B3729Cf8f377EF6F97d87C49661b36Ed02bB"),
+            'gasPrice': web3.eth.gas_price,
+            'from': "0xa5B6B3729Cf8f377EF6F97d87C49661b36Ed02bB"
+        }
+        message_bytes = hash_file.encode('ascii')
+        base64_bytes = base64.b64encode(message_bytes)
+        message = contract.functions.setIPFSLink(int(message_id), base64_bytes[:32], base64_bytes[32:]).buildTransaction(tx)
+        signed_transaction = web3.eth.account.sign_transaction(message, "0x4f81120a31e3acb68d87b242dd0076247e83d08d85cc97b1b8c395ffda9bc43d")
+        transaction_hash = __send_txt__(signed_transaction.rawTransaction)
+        tx_receipt = web3.eth.wait_for_transaction_receipt(transaction_hash, timeout=600)
+    else:
+        message_bytes = hash_file.encode('ascii')
+        base64_bytes = base64.b64encode(message_bytes)
+    return {'method': 'MessageIPFSLink', 'data': [str(base64_bytes[:32]), str(base64_bytes[32:])]}
 
 def retrieve_MessageIPFSLink(message_id):
     with open(compiled_contract_path) as file:
@@ -262,15 +267,12 @@ def send_users_attributes(attribute_certifier_address, private_key, process_inst
     }
     message_bytes = hash_file.encode('ascii')
     base64_bytes = base64.b64encode(message_bytes)
-    # in caso aggiungere il sender con msg.sender in Solidity anche qui. Da valutare
     message = contract.functions.setUserAttributes(int(process_instance_id), base64_bytes[:32],
                                                    base64_bytes[32:]).buildTransaction(tx)
     signed_transaction = web3.eth.account.sign_transaction(message, private_key)
     transaction_hash = __send_txt__(signed_transaction.rawTransaction)
     print(f'tx_hash: {web3.toHex(transaction_hash)}')
     tx_receipt = web3.eth.wait_for_transaction_receipt(transaction_hash, timeout=600)
-    if verbose:
-        print(tx_receipt)
 
 def retrieve_users_attributes(process_instance_id):
     with open(compiled_contract_path) as file:
@@ -282,25 +284,30 @@ def retrieve_users_attributes(process_instance_id):
     message = message_bytes.decode('ascii')
     return message
 
-def send_publicKey_readers(reader_address, private_key, hash_file):
-    with open(compiled_contract_path) as file:
-        contract_json = json.load(file)
-        contract_abi = contract_json['abi']
-    contract = web3.eth.contract(address=deployed_contract_address, abi=contract_abi)
-    tx = {
-        'nonce': get_nonce(reader_address),
-        'gasPrice': web3.eth.gas_price,
-        'from': reader_address
-    }
+# It saves on the blockchain the RSA public key (IPFS link) of an actor! 
+def send_publicKey_readers(hash_file, reader_address):
     message_bytes = hash_file.encode('ascii')
     base64_bytes = base64.b64encode(message_bytes)
-    message = contract.functions.setPublicKeyReaders(base64_bytes[:32], base64_bytes[32:]).buildTransaction(tx)
-    signed_transaction = web3.eth.account.sign_transaction(message, private_key)
-    transaction_hash = __send_txt__(signed_transaction.rawTransaction)
-    print(f'tx_hash: {web3.toHex(transaction_hash)}')
-    tx_receipt = web3.eth.wait_for_transaction_receipt(transaction_hash, timeout=600)
-    if verbose:
-        print(tx_receipt)
+    
+    # This "if" should be deleted. It should be done later through MetaMask thanks to the return values front-end interaction! Now I simulate only the 
+    # MANUFACTURER ("0x7364cc4E7F136a16a7c38DE7205B7A5b18f17258") blockchain interaction!
+    if reader_address == "0x7364cc4E7F136a16a7c38DE7205B7A5b18f17258":
+        with open(compiled_contract_path) as file:
+            contract_json = json.load(file)
+            contract_abi = contract_json['abi']
+        contract = web3.eth.contract(address=deployed_contract_address, abi=contract_abi)
+        tx = {
+            'nonce': get_nonce(reader_address),
+            'gasPrice': web3.eth.gas_price,
+            'from': reader_address
+        }
+        message = contract.functions.setPublicKeyReaders(base64_bytes[:32], base64_bytes[32:]).buildTransaction(tx)
+        # Here I sign with the MANUFACTURER private key!
+        signed_transaction = web3.eth.account.sign_transaction(message, "0x2e78ccaac0156ec23652b710c05e3076de558a12addbeb6949817b93c557e857")
+        transaction_hash = __send_txt__(signed_transaction.rawTransaction)
+        tx_receipt = web3.eth.wait_for_transaction_receipt(transaction_hash, timeout=600)
+
+    return {'method':'send_publicKey_readers', 'data':[str(base64_bytes[:32]), str(base64_bytes[32:])]}
 
 def retrieve_publicKey_readers(reader_address):
     with open(compiled_contract_path) as file:

@@ -7,45 +7,26 @@ from charm.core.engine.util import objectToBytes, bytesToObject
 import ipfshttpclient
 import io
 import sqlite3
-import os
 import time
 import argparse
 
-process_instance_id_env = config('PROCESS_INSTANCE_ID')
+from env_manager import authorities_addresses_and_names_separated
 
-# Function to dynamically retrieve authorities addresses and names
-def retrieve_authorities():
-    authorities_list = []
-    authorities_names = []
-    count = 1
-    # Loop to retrieve all authority addresses and names until no more are found
-    while True:
-        address_key = f'AUTHORITY{count}_ADDRESS'
-        name_key = f'AUTHORITY{count}_NAME'
-        # Check if the config key exists, if not, break the loop
-        if not config(address_key, default=None) or not config(name_key, default=None):
-            break
-        # Append address and name to respective lists
-        authorities_list.append(config(address_key))
-        authorities_names.append(config(name_key))
-        count += 1
-    return authorities_list, authorities_names
-
-authorities_list, authorities_names = retrieve_authorities()
+authorities_addresses, authorities_names = authorities_addresses_and_names_separated()
 
 void_bytes = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 
 class Authority:
     def __init__(self, authority_number):
         self.authority_number = authority_number
-        self.authority_address = authorities_list[authority_number - 1]
+        self.authority_address = authorities_addresses[authority_number - 1]
         self.__authority_private_key__ = config('AUTHORITY' + str(authority_number) + '_PRIVATEKEY')
         self.__conn__ = sqlite3.connect('../databases/authority' +str(authority_number)+ '/authority' + str(authority_number) + '.db')
         self.__x__ = self.__conn__.cursor()
 
     def save_authorities_names(self, api, process_instance_id):
         f = io.StringIO()
-        for i, addr in enumerate(authorities_list):
+        for i, addr in enumerate(authorities_addresses):
             f.write('process_instance: ' + str(process_instance_id) + '\n')
             f.write('identification: ' + 'authority ' + str(i + 1) + '\n')
             f.write('name: ' + str(authorities_names[i]) + '\n')
@@ -53,7 +34,7 @@ class Authority:
         f.seek(0)
         file_to_str = f.read()
         hash_file = api.add_json(file_to_str)
-        print(f'ipfs hash: {hash_file}')
+        print(f'ipfs hash: {hash_file} {authorities_names[self.authority_number -1]}')
         block_int.send_authority_names(self.authority_address, self.__authority_private_key__, process_instance_id, hash_file)
         self.__x__.execute("INSERT OR IGNORE INTO authority_names VALUES (?,?,?)", (str(process_instance_id), hash_file, file_to_str))
         self.__conn__.commit()
@@ -79,18 +60,16 @@ class Authority:
         block_int.sendElements(self.authority_address, self.__authority_private_key__, process_instance_id, (g1_1_bytes, g2_1_bytes))
 
     def generate_public_parameters(self, groupObj, maabe, api, process_instance_id):
-        #self.__x__.execute("SELECT * FROM h_values WHERE process_instance=?", (str(process_instance_id),))
-        #result = self.__x__.fetchall()
         hashes1 = []
         hashes2 = []
         com1 = []
         com2 = []
         count = 0
-        for auth in authorities_list:
-            g1g2_hashed = block_int.retrieveHashedElements(authorities_list[count], process_instance_id)
+        for auth in authorities_addresses:
+            g1g2_hashed = block_int.retrieveHashedElements(authorities_addresses[count], process_instance_id)
             if void_bytes in g1g2_hashed:
                 return False
-            g1g2 = block_int.retrieveElements(authorities_list[count], process_instance_id)
+            g1g2 = block_int.retrieveElements(authorities_addresses[count], process_instance_id)
             if void_bytes in g1g2:
                 return False
             hashes1.append(g1g2_hashed[0])
@@ -105,7 +84,7 @@ class Authority:
         pp_reduced = objectToBytes(public_parameters_reduced, groupObj)
         file_to_str = pp_reduced.decode('utf-8')
         hash_file = api.add_json(file_to_str)
-        print(f'ipfs hash: {hash_file}')
+        print(f'ipfs hash: {hash_file} {authorities_names[self.authority_number -1]}')
         self.__x__.execute("INSERT OR IGNORE INTO public_parameters VALUES (?,?,?)", (str(process_instance_id), hash_file, file_to_str))
         self.__conn__.commit()
         block_int.send_parameters_link(self.authority_address, self.__authority_private_key__, process_instance_id, hash_file)
@@ -130,7 +109,7 @@ class Authority:
         sk1_bytes = objectToBytes(sk1, groupObj)
         file_to_str = pk1_bytes.decode('utf-8')
         hash_file = api.add_json(file_to_str)
-        print(f'ipfs hash: {hash_file}')
+        print(f'ipfs hash: {hash_file} {authorities_names[self.authority_number -1]}')
         self.__x__.execute("INSERT OR IGNORE INTO private_keys VALUES (?,?)", (str(process_instance_id), sk1_bytes))
         self.__conn__.commit()
         self.__x__.execute("INSERT OR IGNORE INTO public_keys VALUES (?,?,?)", (str(process_instance_id), hash_file, pk1_bytes))
@@ -141,35 +120,32 @@ def main():
     groupObj = PairingGroup('SS512')
     maabe = MaabeRW15(groupObj)
     api = ipfshttpclient.connect('/ip4/127.0.0.1/tcp/5001')
-    process_instance_id = int(process_instance_id_env)
     parser = argparse.ArgumentParser(description='Authority')
     parser.add_argument('-a', '--authority', type=int, help='Authority number')
+    parser.add_argument('-p', '--process_id', type=int, help='Process_id')
     args = parser.parse_args()
-    if args.authority < 1 or args.authority > len(authorities_list):
+    process_instance_id = args.process_id
+    if args.authority < 1 or args.authority > len(authorities_addresses):
         parser.print_help()
     else:
         authority_number = args.authority
         authority = Authority(authority_number)
         # 0.1
-        print("Phase 0.1")
+        print(f"Phase 0.1 Authority {authority_number}")
         authority.save_authorities_names(api, process_instance_id)
         # 0.2
-        print("Phase 0.2")
+        print(f"Phase 0.2 Authority {authority_number}")
         authority.initial_parameters_hashed(groupObj, process_instance_id)
         # 0.3
-        print("Phase 0.3")
+        print(f"Phase 0.3 Authority {authority_number}")
         authority.initial_parameters(process_instance_id)
         # 0.4
-        print("Phase 0.4")
+        print(f"Phase 0.4 Authority {authority_number}")
         while not authority.generate_public_parameters(groupObj, maabe, api, process_instance_id):
             time.sleep(5)
         # 0.5
-        print("Phase 0.5")
+        print(f"Phase 0.5 Authority {authority_number}")
         authority.generate_pk_sk(groupObj, maabe, api, process_instance_id)
 
 if __name__ == '__main__':
-    main()   
-    
-    
-    
-
+    main()
