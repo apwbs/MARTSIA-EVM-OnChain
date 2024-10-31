@@ -1,7 +1,9 @@
 # MARTSIA-Demo-KoB
 
+Version of MARTSIA where the request and transmission of Authority key segments are carried out through the blockchain.
+
 ## Wiki
-Check out the [Wiki](https://github.com/apwbs/MARTSIA-Ethereum-KoB/wiki) for a detailed documentation and step-by-step tutorial to run the system locally.
+Check out the [Wiki](https://github.com/apwbs/MARTSIA-Demo-KoB/wiki) for a detailed documentation and step-by-step tutorial to run the system locally.
 
 ## This repository
 In this repository you find several folders necessary to run the system. 
