@@ -2,7 +2,10 @@
 pragma solidity >= 0.5.0 < 0.9.0;
 
 contract MARTSIAEth {
-
+  
+  // Event to notify authorities to send their portion of the decryption key
+  event AuthoritiesNotified(uint64 indexed process_id, address indexed user, address[] authorities);
+  
   struct authoritiesNames {
     bytes32 hashPart1;
     bytes32 hashPart2;
@@ -218,6 +221,10 @@ contract MARTSIAEth {
     }
     return joined;
   }
-
+  
+  // Function called by an actor to notify the authorities to send their decryption key
+  function notifyAuthorities(uint64 _instanceID, address[] memory _authorities) public {
+      // Emit the event with the process_id, sender's address, and the list of authorities
+      emit AuthoritiesNotified(_instanceID, msg.sender, _authorities);
+  }
 }
-

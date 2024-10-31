@@ -3,7 +3,6 @@ from charm.toolbox.secretutil import SecretUtil
 from charm.toolbox.ABEncMultiAuth import ABEncMultiAuth
 import re
 
-
 class MaabeRW15(ABEncMultiAuth):
     """
     Efficient Statically-Secure Large-Universe Multi-Authority Attribute-Based Encryption
@@ -134,3 +133,4 @@ class MaabeRW15(ABEncMultiAuth):
             B *= (ct['C1'][y] * pair(ct['C2'][y], sk['keys'][x]['K']) * pair(ct['C3'][y], H(sk['GID'])) * pair(
                 sk['keys'][x]['KP'], ct['C4'][y])) ** coefficients[y]
         return ct['C0'] / B
+

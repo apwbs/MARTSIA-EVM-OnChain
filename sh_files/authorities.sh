@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Function to open a terminal and run commands for each Authority
 run_commands() {
     local authority=$1
     gnome-terminal -- bash -c "\
@@ -13,8 +14,11 @@ run_commands() {
             bash' \
         "
 }
+
 filename="../src/.env"
+# Count Authorities based on NAME="AUTH" lines in the file
 count=$(grep -c '^[^#]*''NAME="AUTH' "$filename")
+# Run commands for each Authority found
 for ((i=1; i<=$count; i++)); do
     run_commands $i
 done
