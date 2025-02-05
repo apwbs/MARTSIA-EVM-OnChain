@@ -5,7 +5,7 @@
 
 This version of MARTSIA-EVM carries out the request and transmission of key segments between the Reader and Authorities through the blockchain using RSA encryption. 
 
-For the main details on MARTSIA-EVM, refer to the main version [MARTSIA-EVM-TLS](https://github.com/apwbs/MARTSIA-EVM-TLS).
+For the main details on MARTSIA-EVM, refer to the main version [MARTSIA-EVM-TLS](https://github.com/apwbs/MARTSIA-EVM-TLS), where the request and transmission of key segments between the Reader and Authorities are performed via TLS connections.
 
 ## Wiki
 For a detailed documentation and step-by-step tutorial to run this MARTSIA-EVM version locally, check out the [Wiki](https://github.com/apwbs/MARTSIA-Demo-KoB/wiki).
