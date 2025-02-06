@@ -3,7 +3,8 @@
 **Multi-Authority Approach to Transaction Systems for Interoperating Applications**  
 **** 
 
-This version of MARTSIA-Demo carries out the request and transmission of key segments between the Reader and Authorities through the blockchain using RSA encryption. 
+This version of MARTSIA-Demo carries out the request and transmission of key segments between the Reader and Authorities through the blockchain using RSA encryption.
+We implemented the smart contract for this MARTSIA version in Solidity, making it EVM-compatible.
 
 ## Wiki
 For a detailed documentation and step-by-step tutorial to run this version locally, check out the [Wiki](https://github.com/apwbs/MARTSIA-Demo-KoB/wiki).
