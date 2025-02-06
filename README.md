@@ -1,11 +1,9 @@
 # MARTSIA-EVM-OnChain
 
-**Multi-Authority Approach to Transaction Systems for Interoperating Applications - Ethereum Virtual Machine - on Chain**  
+**Multi-Authority Approach to Transaction Systems for Interoperating Applications**  
 **** 
 
-This version of MARTSIA-EVM carries out the request and transmission of key segments between the Reader and Authorities through the blockchain using RSA encryption. 
-
-For the main details on MARTSIA-EVM, refer to the main version [MARTSIA-EVM-TLS](https://github.com/apwbs/MARTSIA-EVM-TLS), where the request and transmission of key segments between the Reader and Authorities are performed via TLS connections.
+This version of MARTSIA-Demo carries out the request and transmission of key segments between the Reader and Authorities through the blockchain using RSA encryption. 
 
 ## Wiki
 For a detailed documentation and step-by-step tutorial to run this version locally, check out the [Wiki](https://github.com/apwbs/MARTSIA-Demo-KoB/wiki).
